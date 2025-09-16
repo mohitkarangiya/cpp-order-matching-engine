@@ -23,6 +23,7 @@ class OrderBook
     Trades MatchOrders();
 
 public:
+    Trades AddOrder(const Order& order);
     Trades AddOrder(const OrderPointer& order);
     bool CancelOrder(const OrderId& orderId);
     Trades ModifyOrder(const OrderModify& orderModify);

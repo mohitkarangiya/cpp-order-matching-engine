@@ -10,11 +10,13 @@ enum class OrderType: uint8_t { GoodTillCancel = 0, FillOrKill = 1 };
 using Price = std::int64_t;
 using Quantity = std::uint64_t;
 using OrderId = std::uint64_t;
+using SymbolId = uint32_t;
 
 class Order
 {
 public:
-    Order(const OrderId& orderId, const OrderType& orderType , const Side& side, const Price& price, const Quantity& quantity):
+    Order(const SymbolId symbolId,const OrderId& orderId, const OrderType& orderType , const Side& side, const Price& price, const Quantity& quantity):
+        symbolId{symbolId},
         orderId{orderId},
         orderType{orderType},
         side{side},
@@ -23,6 +25,7 @@ public:
         remainingQuantity{quantity}
     {}
 
+    const SymbolId& GetSymbolId() const {return symbolId; }
     const OrderId& GetOrderId() const { return orderId; }
     const OrderType& GetOrderType() const { return orderType; }
     const Side& GetSide() const { return side; }
@@ -35,6 +38,7 @@ public:
     void Fill(const Quantity& fillQuantity);
 
 private:
+    SymbolId symbolId;
     OrderId orderId;
     OrderType orderType;
     Side side;

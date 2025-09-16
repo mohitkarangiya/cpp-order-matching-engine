@@ -94,6 +94,11 @@ Trades OrderBook::MatchOrders()
     return trades;
 }
 
+Trades OrderBook::AddOrder(const Order& order)
+{
+    return AddOrder(std::make_shared<Order>(order));
+}
+
 Trades OrderBook::AddOrder(const OrderPointer& order)
 {
     if (orders.contains(order->GetOrderId())) return {};
@@ -150,9 +155,10 @@ Trades OrderBook::ModifyOrder(const OrderModify& orderModify)
 {
     if ( !orders.contains(orderModify.GetOrderId()) ) return {};
 
-    const OrderType CurrentOrderType = orders.at(orderModify.GetOrderId()).order->GetOrderType();
-
+    const OrderPointer& orderPointer = orders.at(orderModify.GetOrderId()).order;
+    const OrderType CurrentOrderType = orderPointer->GetOrderType();
+    const SymbolId SymbolId = orderPointer->GetSymbolId();
     CancelOrder(orderModify.GetOrderId());
 
-    return AddOrder( orderModify.ToOrderPointer(CurrentOrderType) );
+    return AddOrder( orderModify.ToOrderPointer(SymbolId,CurrentOrderType) );
 }
