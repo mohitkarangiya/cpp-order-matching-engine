@@ -1,15 +1,31 @@
-#include "core/OrderBook.hpp"
+#include <fstream>
 #include "core/Router.hpp"
 #include <iostream>
-
 #include "core/SymbolWorker.hpp"
+
+
+void loggingWorker(MPSCQueue<std::string>* logQueue, std::atomic<bool>* running) {
+    std::ofstream logFile("trading.log");
+    while (running->load()) {
+        auto msg = logQueue->pop();
+        if (msg) {
+            logFile << *msg << std::endl;
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+}
 
 int main()
 {
+    MPSCQueue<std::string> logQueue(1000);
+    std::atomic<bool> logRunning{true};
+
     Router router(1,100);
 
-    SymbolWorker worker1(1, router.GetQueueForSymbol(1));
+    std::jthread logger(loggingWorker, &logQueue, &logRunning);
 
+    SymbolWorker worker1(1, router.GetQueueForSymbol(1), &logQueue);
     worker1.Start();
 
     router.RouteMessage(1, AddOrderMessage(Order(1,1,OrderType::GoodTillCancel,Side::Buy,100,10)));
@@ -20,6 +36,9 @@ int main()
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // sleeping now for testing
     worker1.Stop();
+    logRunning.store(false);
+    if (logger.joinable())
+        logger.join();
     std::cout << "Test Completed" << std::endl;
     return 0;
 }

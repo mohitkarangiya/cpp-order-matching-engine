@@ -40,6 +40,9 @@ bool SPSCQueue<T>::push(const T& item)
     const auto nextHead = GetNextIndex(currHead);
     if (nextHead == tail_.load(std::memory_order_acquire)) return false;
 
+    head_.compare_exchange_weak(currHead, nextHead,
+        std::memory_order_release, std::memory_order_relaxed);
+
     buffer_[currHead] = item;
     head_.store(nextHead, std::memory_order_release);
     return true;

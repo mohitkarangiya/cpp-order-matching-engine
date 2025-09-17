@@ -4,9 +4,10 @@
 #include <queue>
 #include "core/OrderMessage.hpp"
 
-SymbolWorker::SymbolWorker(const SymbolId& symbolId, SPSCQueue<OrderMessage>* queue):
+SymbolWorker::SymbolWorker(const SymbolId& symbolId, SPSCQueue<OrderMessage>* queue, MPSCQueue<std::string>* logQueue):
     symbolId_(symbolId),
-    orderQueue_(queue)
+    orderQueue_(queue),
+    logQueue_(logQueue)
 {}
 
 SymbolWorker::~SymbolWorker()
@@ -38,17 +39,17 @@ void SymbolWorker::ProcessOrders()
             if (std::holds_alternative<AddOrderMessage>(*message))
             {
                 const auto& [order] = std::get<AddOrderMessage>(*message);
-                std::cout << "Worker " << symbolId_ << ": Processing AddOrder ID " << order.GetOrderId() << std::endl;
+                logQueue_->push("Worker " + std::to_string(symbolId_) + ": Processing AddOrder ID " + std::to_string(order.GetOrderId()));
                 const Trades trades = orderBook_.AddOrder(std::make_shared<Order>(order));
                 if (!trades.empty())
                 {
-                    std::cout << "Worker " << symbolId_ << ": Generated " << trades.size() << " trades:" << std::endl;
+                    logQueue_->push("Worker " + std::to_string(symbolId_) + ": Generated " + std::to_string(trades.size()) + " trades:");
                     for (const auto& trade : trades)
                     {
-                        std::cout << "  Trade: " << trade.GetBidTradeInfo().quantity
-                                  << " shares at price " << trade.GetBidTradeInfo().price
-                                  << " (Buy Order ID: " << trade.GetBidTradeInfo().orderId
-                                  << ", Sell Order ID: " << trade.GetAskTradeInfo().orderId << ")" << std::endl;
+                        logQueue_->push( "  Trade: " + std::to_string(trade.GetBidTradeInfo().quantity)
+                                  + " shares at price " + std::to_string(trade.GetBidTradeInfo().price)
+                                  + " (Buy Order ID: " + std::to_string(trade.GetBidTradeInfo().orderId)
+                                  + ", Sell Order ID: " + std::to_string(trade.GetAskTradeInfo().orderId) + ")");
                     }
                 }
             }
@@ -59,27 +60,27 @@ void SymbolWorker::ProcessOrders()
                 const Trades trades = orderBook_.ModifyOrder(orderModify);
                 if (!trades.empty())
                 {
-                    std::cout << "Worker " << symbolId_ << ": Modify generated " << trades.size() << " trades" << std::endl;
+                    logQueue_->push("Worker " + std::to_string(symbolId_) + ": Modify generated " + std::to_string(trades.size()) + " trades:");
                     for (const auto& trade : trades)
                     {
-                        std::cout << "  Trade: " << trade.GetBidTradeInfo().quantity
-                                  << " shares at price " << trade.GetBidTradeInfo().price
-                                  << " (Buy Order ID: " << trade.GetBidTradeInfo().orderId
-                                  << ", Sell Order ID: " << trade.GetAskTradeInfo().orderId << ")" << std::endl;
+                        logQueue_->push( "  Trade: " + std::to_string(trade.GetBidTradeInfo().quantity)
+                                  + " shares at price " + std::to_string(trade.GetBidTradeInfo().price)
+                                  + " (Buy Order ID: " + std::to_string(trade.GetBidTradeInfo().orderId)
+                                  + ", Sell Order ID: " + std::to_string(trade.GetAskTradeInfo().orderId) + ")");
                     }
                 }
             }
             else if (std::holds_alternative<CancelOrderMessage>(*message))
             {
                 const auto& [OrderId] = std::get<CancelOrderMessage>(*message);
-                std::cout << "Worker " << symbolId_ << ": Processing CancelOrder ID " << OrderId << std::endl;
+                logQueue_->push("Worker " + std::to_string(symbolId_) + ": Processing CancelOrder ID " + std::to_string(OrderId));
                 if (orderBook_.CancelOrder(OrderId))
                 {
-                    std::cout << "Worker " << symbolId_ << ": Order " << OrderId << " cancelled successfully" << std::endl;
+                    logQueue_->push("Worker " + std::to_string(symbolId_) + ": Order " + std::to_string(OrderId) + " cancelled successfully");
                 }
                 else
                 {
-                    std::cout << "Worker " << symbolId_ << ": Failed to cancel order " << OrderId << std::endl;
+                    logQueue_->push("Worker " + std::to_string(symbolId_) + ": Failed to cancel order " + std::to_string(OrderId));
                 }
             }
         }
