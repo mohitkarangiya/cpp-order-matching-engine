@@ -7,6 +7,8 @@ struct TradeInfo
     OrderId orderId;
     Price price;
     Quantity quantity;
+
+    explicit operator std::string() const {return "hi";}
 };
 
 class Trade
@@ -19,6 +21,7 @@ public:
 
     const TradeInfo& GetBidTradeInfo() const {return bidTradeInfo;}
     const TradeInfo& GetAskTradeInfo() const {return askTradeInfo;}
+
 private:
     TradeInfo bidTradeInfo;
     TradeInfo askTradeInfo;

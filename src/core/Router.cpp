@@ -6,18 +6,18 @@ Router::Router(const size_t& numSymbols,const size_t& queueCapacity):
     symbolQueues_.reserve(numSymbols);
     for ( size_t i = 0; i < numSymbols; ++i )
     {
-        symbolQueues_.push_back(std::make_unique<SPSCQueue<Order>>(queueCapacity));
+        symbolQueues_.push_back(std::make_unique<SPSCQueue<OrderMessage>>(queueCapacity));
     }
 }
 
-bool Router::RouteOrder(const Order& order)
+bool Router::RouteMessage(const SymbolId& symbolId, const OrderMessage& message)
 {
-    SPSCQueue<Order>* queue = GetQueueForSymbol(order.GetSymbolId());
-    if(queue != nullptr) return queue->push(order);
+    SPSCQueue<OrderMessage>* queue = GetQueueForSymbol(symbolId);
+    if(queue != nullptr) return queue->push(message);
     return false;
 }
 
-SPSCQueue<Order>* Router::GetQueueForSymbol(const SymbolId& symbolId) const
+SPSCQueue<OrderMessage>* Router::GetQueueForSymbol(const SymbolId& symbolId) const
 {
     if( symbolId < 1 || symbolId > numSymbols_ ) return nullptr;
     return symbolQueues_[symbolId-1].get();

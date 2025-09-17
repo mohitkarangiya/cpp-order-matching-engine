@@ -2,14 +2,15 @@
 #include <vector>
 #include <utils/SPSCQueue.hpp>
 #include "Order.hpp"
+#include "OrderMessage.hpp"
 
 class Router
 {
 public:
     Router(const size_t& numSymbols,const size_t& queueCapacity);
-    bool RouteOrder(const Order& order);
-    SPSCQueue<Order>* GetQueueForSymbol ( const SymbolId& symbolId ) const;
+    bool RouteMessage(const SymbolId& symbolId, const OrderMessage& message);
+    SPSCQueue<OrderMessage>* GetQueueForSymbol ( const SymbolId& symbolId ) const;
 private:
-    std::vector<std::unique_ptr<SPSCQueue<Order>>> symbolQueues_;
+    std::vector<std::unique_ptr<SPSCQueue<OrderMessage>>> symbolQueues_;
     size_t numSymbols_ = 0;
 };
